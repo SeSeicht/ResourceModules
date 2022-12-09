@@ -53,15 +53,14 @@ param tags object = {}
 @description('Optional. Enable telemetry via a Globally Unique Identifier (GUID).')
 param enableDefaultTelemetry bool = true
 
-@description('Optional. Enable the -all- Log Category. Will not use diagnosticLogCategoriesToEnable if set to true.')
-param enableDiagnosticLogCategoryAll bool = true
-
 @description('Optional. The name of logs that will be streamed.')
 @allowed([
   'VMProtectionAlerts'
+  'allLogs'
 ])
 param diagnosticLogCategoriesToEnable array = [
   'VMProtectionAlerts'
+  //'allLogs'
 ]
 
 @description('Optional. The name of metrics that will be streamed.')
@@ -75,7 +74,7 @@ param diagnosticMetricsToEnable array = [
 @description('Optional. The name of the diagnostic setting, if deployed.')
 param diagnosticSettingsName string = '${name}-diagnosticSettings'
 
-var diagnosticsLogsSpecified = [for category in diagnosticLogCategoriesToEnable: {
+var diagnosticsLogsSpecified = [for category in filter(diagnosticLogCategoriesToEnable, cat => cat != 'allLogs'): {
   category: category
   enabled: true
   retentionPolicy: {
@@ -84,7 +83,7 @@ var diagnosticsLogsSpecified = [for category in diagnosticLogCategoriesToEnable:
   }
 }]
 
-var diagnosticsLogsAll = [for category in diagnosticLogCategoriesToEnable: {
+var diagnosticsLogsAll = [for i in range(0, 1): {
   category: null
   categoryGroup: 'allLogs'
   enabled: true
@@ -93,7 +92,7 @@ var diagnosticsLogsAll = [for category in diagnosticLogCategoriesToEnable: {
     days: diagnosticLogsRetentionInDays
   }
 }]
-var diagnosticsLogs = (enableDiagnosticLogCategoryAll) ? diagnosticsLogsAll : diagnosticsLogsSpecified
+var diagnosticsLogs = contains(diagnosticLogCategoriesToEnable, 'allLogs') ? diagnosticsLogsAll : diagnosticsLogsSpecified
 
 var diagnosticsMetrics = [for metric in diagnosticMetricsToEnable: {
   category: metric
